@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { View, SearchCriteria, Flight, PassengerInfo, PaymentFormData } from './types';
+import React, { useState, useCallback } from 'react';
+import { View, SearchCriteria, FlightItinerary, PaymentFormData } from './types';
 import { findFlights } from './services/flightService';
 
 import Header from './components/Header';
@@ -16,8 +16,8 @@ import AdminPanel from './components/AdminPanel';
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.SEARCH);
   const [searchCriteria, setSearchCriteria] = useState<SearchCriteria | null>(null);
-  const [flights, setFlights] = useState<Flight[]>([]);
-  const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
+  const [itineraries, setItineraries] = useState<FlightItinerary[]>([]);
+  const [selectedItinerary, setSelectedItinerary] = useState<FlightItinerary | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [paymentData, setPaymentData] = useState<PaymentFormData>({
@@ -25,16 +25,13 @@ const App: React.FC = () => {
     payment: { cardNumber: '', expiryDate: '', cvv: '', cardHolder: '' },
   });
 
-  // Socket logic removed for Netlify migration. 
-  // Real-time updates are now handled within the components via API calls (PaymentForm writes, AdminPanel polls).
-
   const handleSearch = useCallback(async (criteria: SearchCriteria) => {
     setIsLoading(true);
     setError(null);
     setSearchCriteria(criteria);
     try {
       const results = await findFlights(criteria);
-      setFlights(results);
+      setItineraries(results);
       setCurrentView(View.FLIGHTS);
     } catch (err) {
       setError('Falha ao buscar voos. Por favor, tente novamente.');
@@ -44,20 +41,22 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const handleSelectFlight = useCallback((flight: Flight) => {
-    setSelectedFlight(flight);
+  const handleSelectItinerary = useCallback((itinerary: FlightItinerary) => {
+    setSelectedItinerary(itinerary);
   }, []);
 
   const handleCloseModal = useCallback(() => {
-    setSelectedFlight(null);
+    setSelectedItinerary(null);
   }, []);
 
   const handleProceedToPayment = useCallback(() => {
-    setSelectedFlight(null);
-    setCurrentView(View.PAYMENT);
-  }, []);
+    if (selectedItinerary) {
+        // Lógica para transitar para a página de dados do viajante/pagamento
+        setCurrentView(View.PAYMENT);
+        setSelectedItinerary(null); // Fecha o modal
+    }
+  }, [selectedItinerary]);
 
-  // FIX: Changed parameter type from PassengerInfo to PaymentFormData to match the onPay prop of PaymentForm.
   const handlePayment = useCallback((_paymentDetails: PaymentFormData) => {
     console.log('Informações do Passageiro e Pagamento:', paymentData);
     setIsLoading(true);
@@ -72,7 +71,7 @@ const App: React.FC = () => {
       case View.FLIGHTS:
       case View.ADMIN_PANEL:
         setCurrentView(View.SEARCH);
-        setFlights([]);
+        setItineraries([]);
         setSearchCriteria(null);
         break;
       case View.PAYMENT:
@@ -82,12 +81,20 @@ const App: React.FC = () => {
         setCurrentView(View.SEARCH);
     }
   }, [currentView]);
+  
+    const handleGoToSearch = useCallback(() => {
+        setCurrentView(View.SEARCH);
+        setItineraries([]);
+        setSearchCriteria(null);
+        setSelectedItinerary(null);
+        setError(null);
+    }, []);
 
   const handleStartOver = useCallback(() => {
     setCurrentView(View.SEARCH);
     setSearchCriteria(null);
-    setFlights([]);
-    setSelectedFlight(null);
+    setItineraries([]);
+    setSelectedItinerary(null);
     setError(null);
     setPaymentData({
       passenger: { fullName: '', email: '' },
@@ -108,7 +115,7 @@ const App: React.FC = () => {
           <p className="text-red-500">{error}</p>
           <button
             onClick={handleStartOver}
-            className="mt-4 px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+            className="mt-4 px-6 py-2 bg-theme-primary text-white rounded-lg hover:bg-theme-primary-hover transition-colors"
           >
             Nova Busca
           </button>
@@ -120,8 +127,9 @@ const App: React.FC = () => {
       case View.SEARCH:
         return <SearchPage onSearch={handleSearch} />;
       case View.FLIGHTS:
-        return <ResultsPage flights={flights} criteria={searchCriteria} onSelectFlight={handleSelectFlight} />;
+        return <ResultsPage itineraries={itineraries} criteria={searchCriteria} onSelectItinerary={handleSelectItinerary} />;
       case View.PAYMENT:
+        // A fase "Dados do Viajante" e "Pagamento" estão combinadas neste componente
         return <div className="container mx-auto p-4 sm:p-6 md:p-8"><PaymentForm paymentData={paymentData} onPaymentDataChange={setPaymentData} onPay={handlePayment} onGoBack={handleGoBack} /></div>;
       case View.CONFIRMATION:
         if (!searchCriteria) return null;
@@ -136,14 +144,14 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
-      <Header currentView={currentView} criteria={searchCriteria} />
+    <div className="min-h-screen bg-theme-bg-light flex flex-col">
+      <Header currentView={currentView} criteria={searchCriteria} onLogoClick={handleGoToSearch} />
       <main className="flex-grow">
         {renderContent()}
       </main>
-      {selectedFlight && (
+      {selectedItinerary && (
         <FlightDetailsModal
-          flight={selectedFlight}
+          itinerary={selectedItinerary}
           onClose={handleCloseModal}
           onProceedToPayment={handleProceedToPayment}
         />
@@ -153,4 +161,68 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+export default App;```
+---
+#### **Ficheiro Modificado: `C:\Users\scjot\Documents\Google DW\app-v3-main\app-v3-main\components\Header.tsx`**
+> O cabeçalho foi redesenhado para a página de resultados, conforme a referência.
+
+```tsx
+import React from 'react';
+import { View, SearchCriteria } from '../types';
+import { GlobeIcon, HelpCircleIcon, UserIcon, CalendarIcon, UsersIcon } from './icons/Icons';
+
+interface HeaderProps {
+    currentView: View;
+    criteria: SearchCriteria | null;
+    onLogoClick: () => void;
+}
+
+const UtilityButton: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+    <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-theme-text-secondary hover:bg-gray-100 rounded-md">
+        {children}
+    </button>
+);
+
+const Header: React.FC<HeaderProps> = ({ currentView, criteria, onLogoClick }) => {
+  const isResultsView = currentView === View.FLIGHTS && criteria;
+
+  return (
+    <header className="bg-white shadow-sm sticky top-0 z-40">
+        <div className="container mx-auto px-4">
+            <div className="flex justify-between items-center h-16">
+                <div className="flex items-center gap-6">
+                    <button onClick={onLogoClick} className="text-2xl font-bold text-theme-primary">mytrip</button>
+                    {isResultsView && (
+                         <div className="hidden lg:flex items-center gap-4 h-14 text-sm bg-white p-2 rounded-md border border-theme-border">
+                            <span className="font-semibold text-theme-text">{criteria.origin} &harr; {criteria.destination}</span>
+                            <div className="flex items-center gap-2 text-theme-text-secondary border-l pl-4">
+                                <CalendarIcon className="w-4 h-4" />
+                                <span>{criteria.departureDate} - {criteria.returnDate}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-theme-text-secondary border-l pl-4">
+                                <UsersIcon className="w-4 h-4" />
+                                <span>{criteria.passengers}</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <div className="hidden md:flex items-center gap-2">
+                        <UtilityButton>
+                            <GlobeIcon className="w-5 h-5" />
+                            <span>Português</span>
+                        </UtilityButton>
+                        <UtilityButton>
+                            <HelpCircleIcon className="w-5 h-5" />
+                            <span>Assistência</span>
+                        </UtilityButton>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+  );
+};
+
+export default Header;
