@@ -1,10 +1,9 @@
-
 // This file now represents the entire Search Page experience, not just a form.
 // It is kept as SearchForm.tsx to avoid file system changes.
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { SearchCriteria, FlightClass } from '../types';
-import { ArrowRightLeftIcon, CalendarIcon, ChevronDownIcon, InfoIcon, PlaneTakeoffIcon, UsersIcon, XIcon } from './icons/Icons';
+import { ArrowRightLeftIcon, CalendarIcon, ChevronDownIcon, UsersIcon, XIcon, PlaneTakeoffIcon } from './icons/Icons';
 
 interface SearchPageProps {
   onSearch: (criteria: SearchCriteria) => void;
@@ -22,7 +21,7 @@ const InputField: React.FC<{ label: string; id: string; value: string; onChange:
       required
       className="w-full h-14 pl-4 pr-10 pt-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-gray-900"
     />
-    {value && <button onClick={() => onChange('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><XIcon className="w-5 h-5" /></button>}
+    {value && <button type="button" onClick={() => onChange('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><XIcon className="w-5 h-5" /></button>}
   </div>
 );
 
@@ -35,9 +34,22 @@ const SearchForm: React.FC<SearchPageProps> = ({ onSearch }) => {
   const [passengers, setPassengers] = useState(1);
   const [flightClass, setFlightClass] = useState<FlightClass>(FlightClass.ECONOMY);
   const [directFlightsOnly, setDirectFlightsOnly] = useState(false);
+  const [isPassengerPopoverOpen, setIsPassengerPopoverOpen] = useState(false);
+  const passengerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (passengerRef.current && !passengerRef.current.contains(event.target as Node)) {
+        setIsPassengerPopoverOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [passengerRef]);
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
     e.preventDefault();
     if (origin && destination && departureDate && (tripType === 'one-way' || returnDate) && passengers > 0) {
       onSearch({ origin, destination, departureDate, returnDate: tripType === 'one-way' ? undefined : returnDate, passengers, flightClass, directFlightsOnly, tripType });
@@ -46,8 +58,6 @@ const SearchForm: React.FC<SearchPageProps> = ({ onSearch }) => {
 
   return (
     <div className="p-6 sm:p-8 bg-white rounded-lg shadow-lg">
-      {/* Tabs */}
-      {/* Tabs */}
       <div className="flex items-center border-b mb-4">
         <button
           type="button"
@@ -72,7 +82,6 @@ const SearchForm: React.FC<SearchPageProps> = ({ onSearch }) => {
         </button>
       </div>
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex flex-col lg:flex-row gap-2">
           <InputField label="De" id="origin" value={origin} onChange={setOrigin} placeholder="Cidade ou aeroporto" />
@@ -83,7 +92,6 @@ const SearchForm: React.FC<SearchPageProps> = ({ onSearch }) => {
         </div>
 
         <div className={`grid grid-cols-1 md:grid-cols-2 ${tripType === 'one-way' ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-2`}>
-          {/* Date Fields */}
           <div className="relative">
             <label htmlFor="departureDate" className="absolute -top-2 left-3 px-1 bg-white text-xs text-gray-500">Partida</label>
             <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
@@ -98,10 +106,51 @@ const SearchForm: React.FC<SearchPageProps> = ({ onSearch }) => {
           )}
 
           {/* Passengers & Class */}
-          <div className="relative">
+          <div className="relative" ref={passengerRef}>
             <label className="absolute -top-2 left-3 px-1 bg-white text-xs text-gray-500">Passageiros</label>
-            <UsersIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-            <input type="text" readOnly value={`${passengers} adulto`} className="w-full h-14 pl-10 pr-3 pt-2 border border-gray-300 rounded-md bg-white cursor-pointer text-gray-900" />
+            <UsersIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
+            <button
+                type="button"
+                onClick={() => setIsPassengerPopoverOpen(!isPassengerPopoverOpen)}
+                className="w-full h-14 pl-10 pr-3 pt-2 border border-gray-300 rounded-md bg-white cursor-pointer text-gray-900 text-left"
+            >
+                {`${passengers} ${passengers > 1 ? 'adultos' : 'adulto'}`}
+            </button>
+            {isPassengerPopoverOpen && (
+                <div className="absolute top-full mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-xl z-20 p-4">
+                    <div className="flex justify-between items-center">
+                        <span className="font-medium text-gray-800">Adultos</span>
+                        <div className="flex items-center gap-4">
+                            <button
+                                type="button"
+                                onClick={() => setPassengers(p => Math.max(1, p - 1))}
+                                disabled={passengers <= 1}
+                                className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-full text-lg text-teal-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                -
+                            </button>
+                            <span className="text-lg font-semibold w-8 text-center">{passengers}</span>
+                            <button
+                                type="button"
+                                onClick={() => setPassengers(p => Math.min(9, p + 1))}
+                                disabled={passengers >= 9}
+                                className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-full text-lg text-teal-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                +
+                            </button>
+                        </div>
+                    </div>
+                     <div className="text-right mt-4">
+                        <button
+                            type="button"
+                            onClick={() => setIsPassengerPopoverOpen(false)}
+                            className="px-4 py-1.5 bg-teal-600 text-white text-sm font-semibold rounded-md hover:bg-teal-700"
+                        >
+                            Concluído
+                        </button>
+                    </div>
+                </div>
+            )}
           </div>
           <div className="relative">
             <label className="absolute -top-2 left-3 px-1 bg-white text-xs text-gray-500">Classe</label>
