@@ -1,3 +1,31 @@
+
+// This file now represents the entire Search Page experience, not just a form.
+// It is kept as SearchForm.tsx to avoid file system changes.
+
+import React, { useState } from 'react';
+import { SearchCriteria, FlightClass } from '../types';
+import { ArrowRightLeftIcon, CalendarIcon, ChevronDownIcon, InfoIcon, PlaneTakeoffIcon, UsersIcon, XIcon } from './icons/Icons';
+
+interface SearchPageProps {
+  onSearch: (criteria: SearchCriteria) => void;
+}
+
+const InputField: React.FC<{ label: string; id: string; value: string; onChange: (val: string) => void; placeholder: string; }> = ({ label, id, value, onChange, placeholder }) => (
+  <div className="relative flex-1">
+    <label htmlFor={id} className="absolute -top-2 left-3 px-1 bg-white text-xs text-gray-500">{label}</label>
+    <input
+      id={id}
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      required
+      className="w-full h-14 pl-4 pr-10 pt-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-gray-900"
+    />
+    {value && <button onClick={() => onChange('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><XIcon className="w-5 h-5" /></button>}
+  </div>
+);
+
 const SearchForm: React.FC<SearchPageProps> = ({ onSearch }) => {
   const [origin, setOrigin] = useState('Porto');
   const [destination, setDestination] = useState('Madrid');
@@ -6,7 +34,6 @@ const SearchForm: React.FC<SearchPageProps> = ({ onSearch }) => {
   const [passengers, setPassengers] = useState(1);
   const [flightClass, setFlightClass] = useState<FlightClass>(FlightClass.ECONOMY);
   const [directFlightsOnly, setDirectFlightsOnly] = useState(false);
-
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,3 +116,5 @@ const SearchForm: React.FC<SearchPageProps> = ({ onSearch }) => {
     </div>
   );
 };
+
+export default SearchForm;
