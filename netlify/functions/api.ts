@@ -95,7 +95,10 @@ export const handler: Handler = async (event, context) => {
         console.error('Database Error:', error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: 'Database connection error' })
+            body: JSON.stringify({
+                error: 'Database connection error',
+                details: error instanceof Error ? error.message : String(error)
+            })
         };
     }
 };
