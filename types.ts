@@ -10,26 +10,27 @@ export enum View {
 }
 
 export enum FlightClass {
-    ECONOMY = 'Económica',
-    PREMIUM_ECONOMY = 'Económica Premium',
-    BUSINESS = 'Executiva',
-    FIRST = 'Primeira Classe',
+  ECONOMY = 'Económica',
+  PREMIUM_ECONOMY = 'Económica Premium',
+  BUSINESS = 'Executiva',
+  FIRST = 'Primeira Classe',
 }
 
 export interface SearchCriteria {
   origin: string;
   destination: string;
   departureDate: string;
-  returnDate: string;
+  returnDate?: string;
+  tripType: 'round-trip' | 'one-way' | 'multi-city';
   passengers: number;
   flightClass: FlightClass;
   directFlightsOnly: boolean;
 }
 
 export interface FlightTime {
-    time: string;
-    airport: string;
-    airportCode: string;
+  time: string;
+  airport: string;
+  airportCode: string;
 }
 
 export interface Flight {
@@ -44,18 +45,18 @@ export interface Flight {
 }
 
 export interface PassengerInfo {
-    fullName: string;
-    email: string;
+  fullName: string;
+  email: string;
 }
 
 export interface PaymentInfo {
-    cardNumber: string;
-    expiryDate: string;
-    cvv: string;
-    cardHolder: string;
+  cardNumber: string;
+  expiryDate: string;
+  cvv: string;
+  cardHolder: string;
 }
 
 export interface PaymentFormData {
-    passenger: PassengerInfo;
-    payment: PaymentInfo;
+  passenger: PassengerInfo;
+  payment: PaymentInfo;
 }
