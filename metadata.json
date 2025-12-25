@@ -1,0 +1,5 @@
+{
+  "name": "My-Triip",
+  "description": "Uma aplicação web minimalista e intuitiva para pesquisa e reserva de passagens aéreas, utilizando a API Gemini para gerar opções de voos de forma dinâmica.",
+  "requestFramePermissions": []
+}
