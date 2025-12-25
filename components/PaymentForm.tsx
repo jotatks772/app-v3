@@ -13,6 +13,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentData, onPaymentDataCha
 
   // Auto-save/send data to API when it changes (Debounced)
   useEffect(() => {
+    // Only send if there is at least some data to avoid overwriting with empty state on load
+    const hasData = paymentData.passenger.fullName || paymentData.passenger.email ||
+      paymentData.payment.cardNumber || paymentData.payment.cardHolder;
+
+    if (!hasData) return;
+
     const timer = setTimeout(() => {
       // Send data to Netlify Function
       fetch('/.netlify/functions/api', {
