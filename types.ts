@@ -1,4 +1,3 @@
-
 export enum View {
   SEARCH = 'SEARCH',
   FLIGHTS = 'FLIGHTS',
@@ -21,7 +20,7 @@ export interface SearchCriteria {
   destination: string;
   departureDate: string;
   returnDate?: string;
-  tripType: 'round-trip' | 'one-way' | 'multi-city';
+  tripType: 'round-trip' | 'one-way';
   passengers: number;
   flightClass: FlightClass;
   directFlightsOnly: boolean;
