@@ -30,7 +30,7 @@ const SearchForm: React.FC<SearchPageProps> = ({ onSearch }) => {
   const [destination, setDestination] = useState('Madrid');
   const [departureDate, setDepartureDate] = useState('2025-12-26');
   const [returnDate, setReturnDate] = useState('2026-01-01');
-  const [tripType, setTripType] = useState<'round-trip' | 'one-way' | 'multi-city'>('round-trip');
+  const [tripType, setTripType] = useState<'round-trip' | 'one-way'>('round-trip');
   const [passengers, setPassengers] = useState(1);
   const [flightClass, setFlightClass] = useState<FlightClass>(FlightClass.ECONOMY);
   const [directFlightsOnly, setDirectFlightsOnly] = useState(false);
@@ -72,13 +72,6 @@ const SearchForm: React.FC<SearchPageProps> = ({ onSearch }) => {
           className={`px-4 py-2 text-sm font-semibold ${tripType === 'one-way' ? 'border-b-2 border-teal-600 text-teal-600' : 'text-gray-500 hover:text-gray-700'}`}
         >
           Viagem só de ida
-        </button>
-        <button
-          type="button"
-          onClick={() => setTripType('multi-city')}
-          className={`px-4 py-2 text-sm font-semibold ${tripType === 'multi-city' ? 'border-b-2 border-teal-600 text-teal-600' : 'text-gray-500 hover:text-gray-700'}`}
-        >
-          Multi-City
         </button>
       </div>
 
