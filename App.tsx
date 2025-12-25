@@ -51,12 +51,112 @@ const App: React.FC = () => {
 
   const handleProceedToPayment = useCallback(() => {
     if (selectedItinerary) {
-        // Lógica para transitar para a página de dados do viajante/pagamento
         setCurrentView(View.PAYMENT);
-        setSelectedItinerary(null); // Fecha o modal
+        setSelectedItinerary(null);
     }
   }, [selectedItinerary]);
 
   const handlePayment = useCallback((_paymentDetails: PaymentFormData) => {
     console.log('Informações do Passageiro e Pagamento:', paymentData);
     setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      setCurrentView(View.CONFIRMATION);
+    }, 2000);
+  }, [paymentData]);
+
+  const handleGoBack = useCallback(() => {
+    switch (currentView) {
+      case View.FLIGHTS:
+      case View.ADMIN_PANEL:
+        setCurrentView(View.SEARCH);
+        setItineraries([]);
+        setSearchCriteria(null);
+        break;
+      case View.PAYMENT:
+        setCurrentView(View.FLIGHTS);
+        break;
+      default:
+        setCurrentView(View.SEARCH);
+    }
+  }, [currentView]);
+  
+    const handleGoToSearch = useCallback(() => {
+        setCurrentView(View.SEARCH);
+        setItineraries([]);
+        setSearchCriteria(null);
+        setSelectedItinerary(null);
+        setError(null);
+    }, []);
+
+  const handleStartOver = useCallback(() => {
+    setCurrentView(View.SEARCH);
+    setSearchCriteria(null);
+    setItineraries([]);
+    setSelectedItinerary(null);
+    setError(null);
+    setPaymentData({
+      passenger: { fullName: '', email: '' },
+      payment: { cardNumber: '', expiryDate: '', cvv: '', cardHolder: '' },
+    });
+  }, []);
+
+  const handleAdminLoginSuccess = () => {
+    setCurrentView(View.ADMIN_PANEL);
+  };
+
+  const renderContent = () => {
+    if (isLoading) return <LoadingSpinner />;
+
+    if (error) {
+      return (
+        <div className="text-center p-8 container mx-auto">
+          <p className="text-red-500">{error}</p>
+          <button
+            onClick={handleStartOver}
+            className="mt-4 px-6 py-2 bg-theme-primary text-white rounded-lg hover:bg-theme-primary-hover transition-colors"
+          >
+            Nova Busca
+          </button>
+        </div>
+      );
+    }
+
+    switch (currentView) {
+      case View.SEARCH:
+        return <SearchPage onSearch={handleSearch} />;
+      case View.FLIGHTS:
+        return <ResultsPage itineraries={itineraries} criteria={searchCriteria} onSelectItinerary={handleSelectItinerary} />;
+      case View.PAYMENT:
+        return <div className="container mx-auto p-4 sm:p-6 md:p-8"><PaymentForm paymentData={paymentData} onPaymentDataChange={setPaymentData} onPay={handlePayment} onGoBack={handleGoBack} /></div>;
+      case View.CONFIRMATION:
+        if (!searchCriteria) return null;
+        return <div className="container mx-auto p-4 sm:p-6 md:p-8"><Confirmation criteria={searchCriteria} onStartOver={handleStartOver} /></div>;
+      case View.ADMIN_LOGIN:
+        return <AdminLogin onLoginSuccess={handleAdminLoginSuccess} />;
+      case View.ADMIN_PANEL:
+        return <AdminPanel paymentData={paymentData} onGoBack={handleGoBack} />;
+      default:
+        return <SearchPage onSearch={handleSearch} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-theme-bg-light flex flex-col">
+      <Header currentView={currentView} criteria={searchCriteria} onLogoClick={handleGoToSearch} />
+      <main className="flex-grow">
+        {renderContent()}
+      </main>
+      {selectedItinerary && (
+        <FlightDetailsModal
+          itinerary={selectedItinerary}
+          onClose={handleCloseModal}
+          onProceedToPayment={handleProceedToPayment}
+        />
+      )}
+      <Footer onAdminClick={() => setCurrentView(View.ADMIN_LOGIN)} />
+    </div>
+  );
+};
+
+export default App;
