@@ -31,26 +31,45 @@ const SearchForm: React.FC<SearchPageProps> = ({ onSearch }) => {
   const [destination, setDestination] = useState('Madrid');
   const [departureDate, setDepartureDate] = useState('2025-12-26');
   const [returnDate, setReturnDate] = useState('2026-01-01');
+  const [tripType, setTripType] = useState<'round-trip' | 'one-way' | 'multi-city'>('round-trip');
   const [passengers, setPassengers] = useState(1);
   const [flightClass, setFlightClass] = useState<FlightClass>(FlightClass.ECONOMY);
   const [directFlightsOnly, setDirectFlightsOnly] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (origin && destination && departureDate && returnDate && passengers > 0) {
-      onSearch({ origin, destination, departureDate, returnDate, passengers, flightClass, directFlightsOnly });
+    e.preventDefault();
+    if (origin && destination && departureDate && (tripType === 'one-way' || returnDate) && passengers > 0) {
+      onSearch({ origin, destination, departureDate, returnDate: tripType === 'one-way' ? undefined : returnDate, passengers, flightClass, directFlightsOnly, tripType });
     }
   };
 
   return (
     <div className="p-6 sm:p-8 bg-white rounded-lg shadow-lg">
       {/* Tabs */}
+      {/* Tabs */}
       <div className="flex items-center border-b mb-4">
-        {['Ida e volta', 'Viagem só de ida', 'Multi-City'].map((tab, index) => (
-          <button key={tab} className={`px-4 py-2 text-sm font-semibold ${index === 0 ? 'border-b-2 border-teal-600 text-teal-600' : 'text-gray-500 hover:text-gray-700'}`}>
-            {tab}
-          </button>
-        ))}
+        <button
+          type="button"
+          onClick={() => setTripType('round-trip')}
+          className={`px-4 py-2 text-sm font-semibold ${tripType === 'round-trip' ? 'border-b-2 border-teal-600 text-teal-600' : 'text-gray-500 hover:text-gray-700'}`}
+        >
+          Ida e volta
+        </button>
+        <button
+          type="button"
+          onClick={() => setTripType('one-way')}
+          className={`px-4 py-2 text-sm font-semibold ${tripType === 'one-way' ? 'border-b-2 border-teal-600 text-teal-600' : 'text-gray-500 hover:text-gray-700'}`}
+        >
+          Viagem só de ida
+        </button>
+        <button
+          type="button"
+          onClick={() => setTripType('multi-city')}
+          className={`px-4 py-2 text-sm font-semibold ${tripType === 'multi-city' ? 'border-b-2 border-teal-600 text-teal-600' : 'text-gray-500 hover:text-gray-700'}`}
+        >
+          Multi-City
+        </button>
       </div>
 
       {/* Form */}
@@ -63,18 +82,20 @@ const SearchForm: React.FC<SearchPageProps> = ({ onSearch }) => {
           <InputField label="Para" id="destination" value={destination} onChange={setDestination} placeholder="Cidade ou aeroporto" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+        <div className={`grid grid-cols-1 md:grid-cols-2 ${tripType === 'one-way' ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-2`}>
           {/* Date Fields */}
           <div className="relative">
             <label htmlFor="departureDate" className="absolute -top-2 left-3 px-1 bg-white text-xs text-gray-500">Partida</label>
             <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
             <input type="date" id="departureDate" value={departureDate} onChange={e => setDepartureDate(e.target.value)} required className="w-full h-14 pl-10 pr-3 pt-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-gray-900" />
           </div>
-          <div className="relative">
-            <label htmlFor="returnDate" className="absolute -top-2 left-3 px-1 bg-white text-xs text-gray-500">Volta</label>
-            <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-            <input type="date" id="returnDate" value={returnDate} onChange={e => setReturnDate(e.target.value)} required className="w-full h-14 pl-10 pr-3 pt-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-gray-900" />
-          </div>
+          {tripType !== 'one-way' && (
+            <div className="relative">
+              <label htmlFor="returnDate" className="absolute -top-2 left-3 px-1 bg-white text-xs text-gray-500">Volta</label>
+              <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+              <input type="date" id="returnDate" value={returnDate} onChange={e => setReturnDate(e.target.value)} required={tripType !== 'one-way'} className="w-full h-14 pl-10 pr-3 pt-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 text-gray-900" />
+            </div>
+          )}
 
           {/* Passengers & Class */}
           <div className="relative">
